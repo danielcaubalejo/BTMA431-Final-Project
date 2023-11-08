@@ -20,3 +20,5 @@ total.inflation.adj.box.office = page %>% html_nodes("center:nth-child(9) .data:
 avg.ticket.price = page %>% html_nodes("center:nth-child(9) .data:nth-child(5)") %>% html_text()
 
 annual.ticket.sales.df <- data.frame(year, tickets.sold, total.box.office, total.inflation.adj.box.office, avg.ticket.price)
+
+print(annual.ticket.sales.df)
