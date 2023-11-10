@@ -22,3 +22,5 @@ avg.ticket.price = page %>% html_nodes("center:nth-child(9) .data:nth-child(5)")
 annual.ticket.sales.df <- data.frame(year, tickets.sold, total.box.office, total.inflation.adj.box.office, avg.ticket.price)
 
 print(annual.ticket.sales.df)
+
+print("its working")
