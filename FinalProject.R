@@ -11,7 +11,6 @@ library(tidyr)
 #### Main Question 1: How are cinemas being affected by streaming services? ####
 
 ## How are theaters performing since the rise of streaming services? ##
-## How are theaters performing since the rise of streaming services? ##
 link.movies.releases = "https://www.boxofficemojo.com/year/?grossesOption=calendarGrosses"
 page.movies.releases = read_html(link.movies.releases)
 
