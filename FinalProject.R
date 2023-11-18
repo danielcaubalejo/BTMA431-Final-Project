@@ -125,7 +125,17 @@ avg.ticket.price = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth
 
 # Creating the scraped data into a data frame
 annual.ticket.sales.df <- data.frame(year, tickets.sold, total.box.office, total.inflation.adj.box.office, avg.ticket.price)
-
+#since the data for Netflix and amazon is from 2013 onwards, I'm filtering the data for tickets to be the same
+annual.ticket.sales.df.relevant = annual.ticket.sales.df[annual.ticket.sales.df$year>= 2013, ]
+#arrange them in accending order of year
+annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant[order(annual.ticket.sales.df.relevant$year), ]
+#add columns for delta of tickets sold and total revenue
+annual.ticket.sales.df.relevant$tickets.sold = as.numeric(gsub(",", "", annual.ticket.sales.df.relevant$tickets.sold))
+annual.ticket.sales.df.relevant$total.box.office <- as.numeric(gsub("[^0-9.]", "", gsub(",", "", annual.ticket.sales.df.relevant$total.box.office)))
+annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
+  select(year,tickets.sold,total.box.office)%>%
+  mutate(tickets_sold_delta = c(NA, diff(tickets.sold)),
+         revenue_delta = c(NA, diff(total.box.office)))
 
 ####################################################################################################################
 
