@@ -70,6 +70,9 @@ amazon.users.df <- amazon.tibble.wide[-1, -1]
 
 # Cable TV users in the US
 
+
+# Source: https://en.wikipedia.org/wiki/Cable_television_in_the_United_States
+
 link.wikipedia = "https://en.wikipedia.org/wiki/Cable_television_in_the_United_States"
 page.wikipedia = read_html(link.wikipedia)
 
@@ -82,7 +85,25 @@ wikitable.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", wikitab
 
 
 
+# Cord cutters / Cable or Satellite cancelation projected data
 
+# Source: https://techjury.net/blog/cable-tv-subscribers-statistics/
+
+link.techjury <- "https://techjury.net/blog/cable-tv-subscribers-statistics/"
+page.techjury = read_html(link.techjury)
+
+cordcutter.years <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(1)") %>% html_text()
+number.of.cord.cutters <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(2)") %>% html_text()
+cordcutter.percentage <- page.techjury %>% html_nodes("tr+ tr td~ td+ td") %>% html_text()
+
+# Put projected data into a  dataframe
+projected.cordcutters.df <- data.frame(cordcutter.years, number.of.cord.cutters, cordcutter.percentage)
+
+# Turn numbers into a numeric
+projected.cordcutters.df$number.of.cord.cutters <- as.numeric(projected.cordcutters.df$number.of.cord.cutters)
+
+# Turn numbers into millions
+projected.cordcutters.df$number.of.cord.cutters <- projected.cordcutters.df$number.of.cord.cutters * 1e6
 
 
 ## How has the number of people that watch in cinemas change over time? How has box office revenue changed?
