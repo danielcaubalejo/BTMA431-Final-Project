@@ -42,6 +42,7 @@ netflix.change.over.previous.year <- page.explodingtopcs %>% html_nodes("table:n
 netflix.users.df <- data.frame(year.netflix, netflix.users, netflix.change.over.previous.year)
 
 
+
 # Scraping for Amazon users and change over time
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
 page.explodingtopcs = read_html(link.explodingtopics)
@@ -67,6 +68,22 @@ amazon.tibble.wide <- amazon.tibble %>%
 amazon.users.df <- amazon.tibble.wide[-1, -1]
 
 
+# Cable TV users in the US
+
+link.wikipedia = "https://en.wikipedia.org/wiki/Cable_television_in_the_United_States"
+page.wikipedia = read_html(link.wikipedia)
+
+wikitable.df <- page.wikipedia %>% html_nodes("table.wikitable") %>% html_table() %>% .[[1]]
+
+# Removing [#] from the ends of the numbers
+wikitable.df$`Cable TV subscribers` <- sub("\\[\\d+\\]", "", wikitable.df$`Cable TV subscribers`)
+wikitable.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", wikitable.df$`Telephone company TV subscribers`)
+
+
+
+
+
+
 
 ## How has the number of people that watch in cinemas change over time? How has box office revenue changed?
 
@@ -76,6 +93,7 @@ amazon.users.df <- amazon.tibble.wide[-1, -1]
 
 link.thenumbers = "https://www.the-numbers.com/market/"
 page.thenumbers = read_html(link.thenumbers)
+
 
 # Scraping Annual Ticket sales table
 year = page.thenumbers %>% html_nodes("center:nth-child(9) a") %>% html_text()
