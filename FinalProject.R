@@ -11,10 +11,22 @@ library(tidyr)
 #### Main Question 1: How are cinemas being affected by streaming services? ####
 
 ## How are theaters performing since the rise of streaming services? ##
+## How are theaters performing since the rise of streaming services? ##
+link.movies.releases = "https://www.boxofficemojo.com/year/?grossesOption=calendarGrosses"
+page.movies.releases = read_html(link.movies.releases)
 
+link.thenumbers = "https://www.the-numbers.com/market/"
+page.thenumbers = read_html(link.thenumbers)
 
+year.movie.releases = page.thenumbers %>% html_nodes("center:nth-child(9) a") %>% html_text()
+quantity.movie.releases = page.movies.releases %>% html_nodes(".mojo-field-type-positive_integer")%>% html_text()
+tickets.sold = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(2)")%>% html_text()
+cinema.box.office = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(3)")%>% html_text()  
+
+box.office.performance.overtime <- data.frame(year.movie.releases, tickets.sold, cinema.box.office)
 
 ## How long after a movie release does it take for it to air on streaming platforms?
+
 
 
 
