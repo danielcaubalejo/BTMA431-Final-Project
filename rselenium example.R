@@ -8,20 +8,20 @@ rD <- rsDriver(browser = "firefox",
 remDr <- rD[["client"]]
 
 #going to specific website
-remDr$navigate("http://pc8.su.ucalgary.ca/search/")
+remDr$navigate("https://www.rottentomatoes.com/browse/movies_at_home/sort:popular")
 remDr$screenshot(display = TRUE)
 
 #entering text into search
-webElem1 <- remDr$findElement(using = "name", value = "title")
-webElem1$sendKeysToElement(list('information systems', key = 'enter'))
-webElem1$clearElement()
+#webElem1 <- remDr$findElement(using = "name", value = "title")
+#webElem1$sendKeysToElement(list('information systems', key = 'enter'))
+#webElem1$clearElement()
 
 #finding specific elements
-webElems1 <- remDr$findElements(using = 'tag name', "span")
+webElems1 <- remDr$findElements(using = 'xpath', "//span[starts-with(@class, 'p--small')]")
 
-bookTitles <- unlist(lapply(webElems1, function(x){x$getElementText()}))
-bookTitles <- as.data.frame(bookTitles)
-bookTitles <- bookTitles[-NROW(bookTitles)]
+movieTitles <- unlist(lapply(webElems1, function(x){x$getElementText()}))
+movieTitles <- as.data.frame(movieTitles)
+movieTitles <- movieTitles[!apply(movieTitles == "", 1, all),]
 
 webElems2 <- remDr$findElements(using = 'tag name', "i")
 authornames <- unlist(lapply(webElems2, function(x){x$getElementText()}))
@@ -50,3 +50,6 @@ remDr$getCurrentUrl()
 # rD[["server"]]$stop()
 # system("taskkill /im java.exe /f") # Stops the java.exe
 # rm(list = ls())
+
+
+
