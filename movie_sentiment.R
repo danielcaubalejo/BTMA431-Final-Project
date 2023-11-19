@@ -52,6 +52,8 @@ dropdown_all <- function() {
 
 dropdown_all()
 
+#####whiplash (2013) sentiment#####
+
 usernamesElem <- remDr$findElements(using = 'xpath', "//span[starts-with(@class, 'display-name-link')]")
 usernames <- unlist(lapply(usernamesElem, function(x){x$getElementText()}))
 usernames <- head(usernames, 1650)
@@ -75,7 +77,9 @@ ratings <- head(ratings,1650)
 Whiplash_Reviews <- data.frame(usernames, titles, dates, reviews, ratings)
 View(Whiplash_Reviews)
 
-
+# rD[["server"]]$stop()
+# system("taskkill /im java.exe /f") # Stops the java.exe
+# rm(list = ls())
 
 
 
