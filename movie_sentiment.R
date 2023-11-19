@@ -75,7 +75,9 @@ ratings <- head(ratings,1650)
 Whiplash_Reviews <- data.frame(usernames, titles, dates, reviews, ratings)
 View(Whiplash_Reviews)
 
-
+# rD[["server"]]$stop()
+# system("taskkill /im java.exe /f") # Stops the java.exe
+# rm(list = ls())
 
 
 
