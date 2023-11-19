@@ -1,17 +1,25 @@
 library(tidyverse)
+library(RSelenium)
+library(dplyr)
+library(stringr)
 
-#movies sorted by audience score "fresh" - at least 60% positive
-remDr$navigate("https://www.rottentomatoes.com/browse/movies_at_home/audience:upright~sort:popular")
 
-title_navigation <- function(){
+rD <- rsDriver(browser = "firefox",
+               chromever = NULL)
+
+remDr <- rD[["client"]]
+
+remDr$navigate("https://www.imdb.com/title/tt2582802/reviews?ref_=tt_urv")
+
+scroll_navigation <- function(){
   
   #click load more code taken from: https://github.com/ggSamoora/TutorialsBySamoora/blob/main/rate_my_professor_script.Rmd
-  loadmore <- remDr$findElement(using = "xpath", value = '//*[@data-qa="dlp-load-more-button"]')
+  loadmore <- remDr$findElement(using = "xpath", value = '//*[@id="load-more-trigger"]')
   
   #initialize page number
   page <- 0
-  # Loop until page 15, anything 15> webpage begins to load very slow
-  while (page < 15) {
+  #large enough page # until "load more" does not appear
+  while (page <= 30) {
     #Navigate to the webpage with the current page number
     #url <- paste0("https://www.rottentomatoes.com/browse/movies_at_home/sort:popular?page=", page)
     
@@ -21,29 +29,63 @@ title_navigation <- function(){
     
     loadmore$clickElement()
     # Increment the page number
-    page <- page + 1
+    #page <- page + 1
     # Pause code to ensure webpage loads properly
     Sys.sleep(1)
   }
 }
 
-title_navigation()
+scroll_navigation()
 
-webElems1 <- remDr$findElements(using = 'xpath', "//span[starts-with(@class, 'p--small')]")
+dropdown_all <- function() {
+  # Assuming remDr and button_class are already defined
+    button_class <- "expander-icon-wrapper"  # Replace with the actual class name
+  
+  # Find all buttons with the specified class
+  buttons <- remDr$findElements(using = "css selector", value = paste(".", button_class, sep = ""))
+  
+  # Click each button
+  for (button in buttons) {
+    button$clickElement()
+  }
+}
 
-webElems2 <- remDr$findElements(using = 'xpath', "//a[starts-with(@data-track, 'scores')]")
-movie_urls <- map(webElems2, ~.$getElementAttribute("href") %>% unlist())
+dropdown_all()
 
-movieTitles <- unlist(lapply(webElems1, function(x){x$getElementText()}))
-movieTitles <- as.data.frame(movieTitles)
-movieTitles <- movieTitles[!apply(movieTitles == "", 1, all),]
+usernamesElem <- remDr$findElements(using = 'xpath', "//span[starts-with(@class, 'display-name-link')]")
+usernames <- unlist(lapply(usernamesElem, function(x){x$getElementText()}))
+usernames <- head(usernames, 1650)
 
-remDr$navigate("https://www.rottentomatoes.com/m/fifty_shades_of_grey")
-webElems3 <- remDr$findElements(using = 'xpath', "//span[starts-with(@class, 'genre')]")
-genre <- unlist(lapply(webElems3, function(x){x$getElementText()}))
+titleElem <- remDr$findElements(using = 'xpath', "//a[starts-with(@class, 'title')]")
+titles <- unlist(lapply(titleElem, function(x){x$getElementText()}))
+titles <- head(titles, 1650)
 
-remDr$navigate("https://www.rottentomatoes.com/m/fifty_shades_of_grey/reviews")
-webElems4 <- remDr$findElements(using = 'xpath', "//div[starts-with(@class, 'review-row')]")
-reviews <- unlist(lapply(webElems4, function(x){x$getElementText()}))
-reviews <- as.data.frame(reviews)
-View(reviews)
+dateElem <- remDr$findElements(using = 'xpath', "//span[starts-with(@class, 'review-date')]")
+dates <- unlist(lapply(dateElem, function(x){x$getElementText()}))
+dates <- head(dates, 1650)
+
+reviewElem <- remDr$findElements(using = 'xpath', "//div[starts-with(@class, 'text show-more__control')]")
+reviews <- unlist(lapply(reviewElem, function(x){x$getElementText()}))
+reviews <- head(reviews,1650)
+
+ratingElem <- remDr$findElements(using = "css", value = "span.rating-other-user-rating")
+ratings <- sapply(ratingElem, function(x) {x$getElementText()}) %>% str_extract("\\d+")
+ratings <- head(ratings,1650)
+
+Whiplash_Reviews <- data.frame(usernames, titles, dates, reviews, ratings)
+View(Whiplash_Reviews)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
