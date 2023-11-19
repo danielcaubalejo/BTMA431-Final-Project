@@ -24,6 +24,7 @@ cinema.box.office = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nt
 
 box.office.performance.overtime <- data.frame(year.movie.releases, tickets.sold, cinema.box.office)
 
+
 ## How long after a movie release does it take for it to air on streaming platforms?
 
 
