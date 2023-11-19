@@ -27,6 +27,37 @@ box.office.performance.overtime <- data.frame(year.movie.releases, tickets.sold,
 ## How long after a movie release does it take for it to air on streaming platforms?
 
 
+# Aneesha's code
+# Specify the URL
+statista_url <- "https://www.statista.com/statistics/947757/theaters-streaming-watching-movies/"
+
+# Read HTML page
+page_statista <- read_html(statista_url)
+
+# Scraping for theaters streaming and watching movies
+theaters_data <- page_statista %>%
+  html_nodes("table:nth-child(15) tr") %>%
+  html_text() %>%
+  strsplit("\n") %>%
+  matrix(ncol = 3, byrow = TRUE) %>%
+  as.data.frame()
+
+# Naming columns
+colnames(theaters_data) <- c("Year", "Number of Theaters Streaming", "Number of Theaters Watching Movies")
+
+# Cleaning data
+theaters_data <- theaters_data[-1, ]  # Remove the header row
+theaters_data <- theaters_data[-nrow(theaters_data), ]  # Remove the last row (total)
+
+# Convert columns to appropriate data types if needed
+theaters_data$Year <- as.numeric(theaters_data$Year)
+theaters_data$Number_of_Theaters_Streaming <- as.numeric(theaters_data$Number_of_Theaters_Streaming)
+theaters_data$Number_of_Theaters_Watching_Movies <- as.numeric(theaters_data$Number_of_Theaters_Watching_Movies)
+
+# Print the resulting data frame
+print(theaters_data)
+
+
 
 
 ####################################################################################################################
