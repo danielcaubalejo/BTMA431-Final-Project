@@ -49,6 +49,8 @@ dropdown_all <- function() {
 #####whiplash (2013) sentiment#####
 
 remDr$navigate("https://www.imdb.com/title/tt2582802/reviews?ref_=tt_urv")
+Sys.sleep(2)
+
 scroll_navigation()
 dropdown_all()
 
@@ -78,6 +80,8 @@ View(Whiplash_Reviews)
 #####Avengers: Infinity War sentiment#####
 
 remDr$navigate("https://www.imdb.com/title/tt4154756/reviews?ref_=tt_urv")
+Sys.sleep(2)
+
 scroll_navigation()
 dropdown_all()
 
