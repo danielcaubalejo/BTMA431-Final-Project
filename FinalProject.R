@@ -182,12 +182,16 @@ annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
 
 ####################################################################################################################
 
-#### Main Question 3: How has taste, in terms of movies sentiment changed over time? ####
+#### Main Question 3: How has sentiment, in terms of movie reviews changed over time? ####
 
-## What genre has the most frequency of social media buzz?
-## (Based on # of views, # of comments, Top search, frequency of words)
-## (What words appear most often?)
+#csv files scraped from imdb -> movie_sentiment.R
+Infinity_War <- read.csv("InfWar_Reviews.csv")
+The_Matrix <- read.csv("Matrix_Reviews.csv")
+Spirited_Away <- read.csv("Spirited_Reviews.csv")
+Whiplash <- read.csv("Whiplash_Reviews.csv")
 
+## Comparing review word frequency between movies
+## Does movie genre determine what sort of reviews people make?
+## Comparing review word frequency between good and bad reviews
 
-## What is the most popular genre per year?
 
