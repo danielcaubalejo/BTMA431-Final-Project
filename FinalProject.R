@@ -198,12 +198,22 @@ print(cable.users.predictions)
 
 
 
-# Making a model to determine what the correlation is between Netflix, Amazon and Cable TV subscribers
+# Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
 
+# Merge data frames based on year column
+subscribers.merged.df <- merge(merge(amazon.users.df, netflix.users.df, by.x = "year.amazon", by.y = "year.netflix"), cable.users.df, by.x = "year.amazon", by.y = "Year")
 
+# Getting rid of rows with NA
+subscribers.merged.df <- subscribers.merged.df[-1 , ]
 
+# Calculate the correlation matrix based on change over previous year
+correlation.matrix <- cor(subscribers.merged.df[, c("amazon.change.over.previous.year", "netflix.change.over.previous.year", "change.over.previous.year")])
 
+# Display the correlation matrix
+print(correlation.matrix)
 
+# Amazon v. Netflix has a correlation of 0.27, slightly positively correlated, increase as each other increase
+# Amazon v Cable TV has a negative correlation of -0.15, as amazon increases, Cable TV subscribers decrease
 
 
 
