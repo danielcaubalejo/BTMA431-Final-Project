@@ -5,6 +5,20 @@ install.packages("dplyr")
 library(dplyr)
 install.packages("tidyr")
 library(tidyr)
+install.packages("data.table")
+library(data.table)
+install.packages("tm")
+library(tm)
+install.packages("NLP")
+library(NLP)
+install.packages("syuzhet")
+library(syuzhet)
+install.packages("wordcloud")
+library(wordcloud)
+install.packages("textstem")
+library(textstem)
+install.packages("ggplot2")
+library(ggplot2)
 
 ####################################################################################################################
 
@@ -182,14 +196,63 @@ annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
 
 #### Main Question 3: How has sentiment, in terms of movie reviews changed over time? ####
 
+
 #csv files scraped from imdb -> movie_sentiment.R
 Infinity_War <- read.csv("InfWar_Reviews.csv")
 The_Matrix <- read.csv("Matrix_Reviews.csv")
 Spirited_Away <- read.csv("Spirited_Reviews.csv")
 Whiplash <- read.csv("Whiplash_Reviews.csv")
 
-## Comparing review word frequency between movies
+#removing NA rows
+Infinity_War <- na.omit(Infinity_War)
+The_Matrix <- na.omit(The_Matrix)
+Spirited_Away <- na.omit(Spirited_Away)
+Whiplash <- na.omit(Whiplash)
+
+Infinity_WarCorpus <- data.frame(doc_id = row.names(Infinity_War),
+                                 text = Infinity_War$reviews2)
+
+#preparing words for analysis
+Infinity_WarCorpus <- VCorpus(DataframeSource(Infinity_WarCorpus))
+#transform words to all lowercase
+Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, content_transformer(tolower))
+#removing english stopwords-> stopwords("english")
+Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, removeWords, stopwords("english"))
+#removing any numbers
+Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, removeNumbers)
+#removing punctuations
+Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, removePunctuation)
+#removing whitespace 
+Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, stripWhitespace)
+#lemmatizing words
+Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, lemmatize_words)
+
+#document-term matrix
+Infinity_dtm <- DocumentTermMatrix(Infinity_WarCorpus)
+#term-document matrix
+Infinity_tdm <- TermDocumentMatrix(Infinity_WarCorpus)
+
+#wordcloud test
+m = as.matrix(Infinity_tdm)
+wordFreq = sort(rowSums(m), decreasing = TRUE)
+set.seed(2)
+wordcloud(words = names(wordFreq), freq = wordFreq, min.freq = 40, random.order = F)
+
+#review length correlation tests
+
+Whiplash$dates1 <- as.Date(Whiplash$dates1)
+
+Whiplash <- Whiplash[order(Whiplash$dates1), ]
+View(Whiplash)
+Whiplash_avgratings <- Whiplash %>%
+  group_by(dates1) %>%
+  summarise(avg_rating = mean(ratings1, na.rm = TRUE))
+
+ggplot(Whiplash_avgratings, aes(x = dates1, y = avg_rating)) +
+  geom_line() +
+  labs(x = "Date", y = "Average Rating", title = "Trend of Movie Ratings Over Time")
+
 ## Does movie genre determine what sort of reviews people make?
 ## Comparing review word frequency between good and bad reviews
-
+## Using regression analysis to predict review rating
 
