@@ -141,6 +141,7 @@ amazon.users.df$amazon.change.over.previous.year <- as.numeric(amazon.users.df$a
 amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.change.over.previous.year * 1e6
 
 amazon.users.df$year.amazon <- as.numeric(amazon.users.df$year.amazon)
+amazon.users.df <- amazon.users.df[amazon.users.df$year.amazon >= 2013 & amazon.users.df$year.amazon <= 2023, ]
 
 
 
@@ -167,35 +168,41 @@ cable.users.df$`Cable TV subscribers` <- as.numeric(gsub(",", "",cable.users.df$
 cable.users.df$`Telephone company TV subscribers` <- NULL
 
 # Sub-setting data to be from 2013 to 2023
-cable.users.df <- cable.users.df[cable.users.df$Year >= 2013 & cable.users.df$Year <= 2024, ]
+cable.users.df <- cable.users.df[cable.users.df$Year >= 2013 & cable.users.df$Year <= 2023, ]
 
 # Adding change over time column
 cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV subscribers`))
 
 
 
-# # Cord cutters / Cable or Satellite cancellation projected data
-# # Source: https://techjury.net/blog/cable-tv-subscribers-statistics/
-# 
-# link.techjury <- "https://techjury.net/blog/cable-tv-subscribers-statistics/"
-# page.techjury = read_html(link.techjury)
-# 
-# cordcutter.years <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(1)") %>% html_text()
-# number.of.cord.cutters <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(2)") %>% html_text()
-# cordcutter.percentage <- page.techjury %>% html_nodes("tr+ tr td~ td+ td") %>% html_text()
-# 
-# # Put projected data into a  dataframe
-# projected.cordcutters.df <- data.frame(cordcutter.years, number.of.cord.cutters, cordcutter.percentage)
-# 
-# # Turn numbers into a numeric
-# projected.cordcutters.df$number.of.cord.cutters <- as.numeric(projected.cordcutters.df$number.of.cord.cutters)
-# 
-# # Turn numbers into millions
-# projected.cordcutters.df$number.of.cord.cutters <- projected.cordcutters.df$number.of.cord.cutters * 1e6
+# Cable TV users predictions for next 5 years
+
+# Making regression model to predict how many cable users in the next 5 years
+cable.model <- lm(`Cable TV subscribers` ~ Year + change.over.previous.year, data = cable.users.df)
+
+# Creating a sequence for the next 5 years
+next.5.years <- data.frame(Year = seq(from = 2023, to = 2028, by = 1))
+
+# Calculate change for the next.5.years based on the last available change
+last.observation <- tail(cable.users.df$`Cable TV subscribers`, 1)
+next.5.years$change.over.previous.year <- last.observation - cable.users.df$`Cable TV subscribers`[nrow(cable.users.df)] 
+
+# Predict for the next 5 years
+predictions <- predict(cable.model, newdata = next.5.years)
+
+# Add predictions into a data frame
+cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users = predictions)
+
+print(cable.users.predictions)
 
 
 
-# Making regression model to predict how many 
+
+# Making a model to determine what the correlation is between Netflix, Amazon and Cable TV subscribers
+
+
+
+
 
 
 
