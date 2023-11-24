@@ -96,7 +96,14 @@ netflix.change.over.previous.year <- page.explodingtopcs %>% html_nodes("table:n
 # Creating data frame for Netflix users and change
 netflix.users.df <- data.frame(year.netflix, netflix.users, netflix.change.over.previous.year)
 
+# Change data type for Netflix to be numeric & converting into millions
+netflix.users.df$netflix.users <- gsub(" million", "", netflix.users.df$netflix.users)
+netflix.users.df$netflix.users <- as.numeric(netflix.users.df$netflix.users)
+netflix.users.df$netflix.users <- netflix.users.df$netflix.users * 1e6
 
+netflix.users.df$netflix.change.over.previous.year <- gsub("↑| million", "", netflix.users.df$netflix.change.over.previous.year)
+netflix.users.df$netflix.change.over.previous.year <- as.numeric(netflix.users.df$netflix.change.over.previous.year)
+netflix.users.df$netflix.change.over.previous.year <- netflix.users.df$netflix.change.over.previous.year * 1e6
 
 # Scraping for Amazon users and change over time
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
@@ -111,7 +118,7 @@ amazon.table.n <- length(amazon.table) / 3
 # Creating a tibble
 amazon.tibble <- tibble(
   key = rep(seq_len(amazon.table.n), each = 3),
-  variable = rep(c("Year", "Amazon Prime Members", "Change Over Previous Year"), times = amazon.table.n),
+  variable = rep(c("year.netflix", "amazon.users", "amazon.change.over.previous.year"), times = amazon.table.n),
   value = amazon.table
   )
 
@@ -122,9 +129,18 @@ amazon.tibble.wide <- amazon.tibble %>%
 # Removing the first row and column of our table
 amazon.users.df <- amazon.tibble.wide[-1, -1]
 
+# Change data type for Amazon to be numeric & converting into millions
+amazon.users.df$amazon.users <- gsub(" million", "", amazon.users.df$amazon.users)
+amazon.users.df$amazon.users <- as.numeric(amazon.users.df$amazon.users)
+amazon.users.df$amazon.users <- amazon.users.df$amazon.users * 1e6
+
+amazon.users.df$amazon.change.over.previous.year <- gsub("↑| million", "", amazon.users.df$amazon.change.over.previous.year)
+amazon.users.df$amazon.change.over.previous.year <- as.numeric(amazon.users.df$amazon.change.over.previous.year)
+amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.change.over.previous.year * 1e6
+
+
 
 # Cable TV users in the US
-
 
 # Source: https://en.wikipedia.org/wiki/Cable_television_in_the_United_States
 
@@ -140,8 +156,8 @@ wikitable.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", wikitab
 
 
 
-# Cord cutters / Cable or Satellite cancelation projected data
 
+# Cord cutters / Cable or Satellite cancellation projected data
 # Source: https://techjury.net/blog/cable-tv-subscribers-statistics/
 
 link.techjury <- "https://techjury.net/blog/cable-tv-subscribers-statistics/"
