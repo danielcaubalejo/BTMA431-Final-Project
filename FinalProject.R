@@ -105,6 +105,8 @@ netflix.users.df$netflix.change.over.previous.year <- gsub("↑| million", "", n
 netflix.users.df$netflix.change.over.previous.year <- as.numeric(netflix.users.df$netflix.change.over.previous.year)
 netflix.users.df$netflix.change.over.previous.year <- netflix.users.df$netflix.change.over.previous.year * 1e6
 
+netflix.users.df$year.netflix <- as.numeric(netflix.users.df$year.netflix)
+
 # Scraping for Amazon users and change over time
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
 page.explodingtopcs = read_html(link.explodingtopics)
@@ -118,7 +120,7 @@ amazon.table.n <- length(amazon.table) / 3
 # Creating a tibble
 amazon.tibble <- tibble(
   key = rep(seq_len(amazon.table.n), each = 3),
-  variable = rep(c("year.netflix", "amazon.users", "amazon.change.over.previous.year"), times = amazon.table.n),
+  variable = rep(c("year.amazon", "amazon.users", "amazon.change.over.previous.year"), times = amazon.table.n),
   value = amazon.table
   )
 
@@ -138,6 +140,8 @@ amazon.users.df$amazon.change.over.previous.year <- gsub("↑| million", "", ama
 amazon.users.df$amazon.change.over.previous.year <- as.numeric(amazon.users.df$amazon.change.over.previous.year)
 amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.change.over.previous.year * 1e6
 
+amazon.users.df$year.amazon <- as.numeric(amazon.users.df$year.amazon)
+
 
 
 # Cable TV users in the US
@@ -147,34 +151,53 @@ amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.chang
 link.wikipedia = "https://en.wikipedia.org/wiki/Cable_television_in_the_United_States"
 page.wikipedia = read_html(link.wikipedia)
 
-wikitable.df <- page.wikipedia %>% html_nodes("table.wikitable") %>% html_table() %>% .[[1]]
+cable.users.df <- page.wikipedia %>% html_nodes("table.wikitable") %>% html_table() %>% .[[1]]
 
 # Removing [#] from the ends of the numbers
-wikitable.df$`Cable TV subscribers` <- sub("\\[\\d+\\]", "", wikitable.df$`Cable TV subscribers`)
-wikitable.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", wikitable.df$`Telephone company TV subscribers`)
+cable.users.df$`Cable TV subscribers` <- sub("\\[\\d+\\]", "", cable.users.df$`Cable TV subscribers`)
+cable.users.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", cable.users.df$`Telephone company TV subscribers`)
+
+# Removing month from years
+cable.users.df$Year <- as.numeric(sub("\\w+\\.\\s", "", cable.users.df$Year))
+
+# Turn Cable TV into numeric
+cable.users.df$`Cable TV subscribers` <- as.numeric(gsub(",", "",cable.users.df$`Cable TV subscribers`))
+
+# Removing unused Telephone Company TV subscribers column
+cable.users.df$`Telephone company TV subscribers` <- NULL
+
+# Sub-setting data to be from 2013 to 2023
+cable.users.df <- cable.users.df[cable.users.df$Year >= 2013 & cable.users.df$Year <= 2024, ]
+
+# Adding change over time column
+cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV subscribers`))
 
 
 
+# # Cord cutters / Cable or Satellite cancellation projected data
+# # Source: https://techjury.net/blog/cable-tv-subscribers-statistics/
+# 
+# link.techjury <- "https://techjury.net/blog/cable-tv-subscribers-statistics/"
+# page.techjury = read_html(link.techjury)
+# 
+# cordcutter.years <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(1)") %>% html_text()
+# number.of.cord.cutters <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(2)") %>% html_text()
+# cordcutter.percentage <- page.techjury %>% html_nodes("tr+ tr td~ td+ td") %>% html_text()
+# 
+# # Put projected data into a  dataframe
+# projected.cordcutters.df <- data.frame(cordcutter.years, number.of.cord.cutters, cordcutter.percentage)
+# 
+# # Turn numbers into a numeric
+# projected.cordcutters.df$number.of.cord.cutters <- as.numeric(projected.cordcutters.df$number.of.cord.cutters)
+# 
+# # Turn numbers into millions
+# projected.cordcutters.df$number.of.cord.cutters <- projected.cordcutters.df$number.of.cord.cutters * 1e6
 
 
-# Cord cutters / Cable or Satellite cancellation projected data
-# Source: https://techjury.net/blog/cable-tv-subscribers-statistics/
 
-link.techjury <- "https://techjury.net/blog/cable-tv-subscribers-statistics/"
-page.techjury = read_html(link.techjury)
+# Making regression model to predict how many 
 
-cordcutter.years <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(1)") %>% html_text()
-number.of.cord.cutters <- page.techjury %>% html_nodes("#us-cord-cutters-2022-2026+ .table-wrapper tr+ tr td:nth-child(2)") %>% html_text()
-cordcutter.percentage <- page.techjury %>% html_nodes("tr+ tr td~ td+ td") %>% html_text()
 
-# Put projected data into a  dataframe
-projected.cordcutters.df <- data.frame(cordcutter.years, number.of.cord.cutters, cordcutter.percentage)
-
-# Turn numbers into a numeric
-projected.cordcutters.df$number.of.cord.cutters <- as.numeric(projected.cordcutters.df$number.of.cord.cutters)
-
-# Turn numbers into millions
-projected.cordcutters.df$number.of.cord.cutters <- projected.cordcutters.df$number.of.cord.cutters * 1e6
 
 
 ## How has the number of people that watch in cinemas change over time? How has box office revenue changed?
