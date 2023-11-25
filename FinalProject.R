@@ -273,61 +273,111 @@ lines(annual.ticket.sales.df.relevant$year, predict(model.box.office), col = "re
 
 
 #csv files scraped from imdb -> movie_sentiment.R
-Infinity_War <- read.csv("InfWar_Reviews.csv")
-The_Matrix <- read.csv("Matrix_Reviews.csv")
-Spirited_Away <- read.csv("Spirited_Reviews.csv")
-Whiplash <- read.csv("Whiplash_Reviews.csv")
+Blair_Witch <- read.csv("Blair_WitchReviews.csv")
+Choco_Factory <- read.csv("Chocolate_FactoryReviews.csv")
+Morbius <- read.csv("MorbiusReviews.csv")
+Prometheus <- read.csv("PrometheusReviews.csv")
+Twilight <- read.csv("TwilightReviews.csv")
 
 #removing NA rows
-Infinity_War <- na.omit(Infinity_War)
-The_Matrix <- na.omit(The_Matrix)
-Spirited_Away <- na.omit(Spirited_Away)
-Whiplash <- na.omit(Whiplash)
+Blair_Witch <- na.omit(Blair_Witch)
+Choco_Factory <- na.omit(Choco_Factory)
+Morbius <- na.omit(Morbius)
+Prometheus <- na.omit(Prometheus)
+Twilight <- na.omit(Twilight)
 
-Infinity_WarCorpus <- data.frame(doc_id = row.names(Infinity_War),
-                                 text = Infinity_War$reviews2)
+wordprocessing <- function(movie_df, text_column, title_column){
+  
+  # Process review_text
+  corpus_text <- Corpus(VectorSource(movie_df$text_column))
+  corpus_text <- tm_map(corpus_text, content_transformer(tolower))
+  corpus_text <- tm_map(corpus_text, removePunctuation)
+  corpus_text <- tm_map(corpus_text, removeNumbers)
+  corpus_text <- tm_map(corpus_text, removeWords, stopwords("english"))
+  corpus_text <- tm_map(corpus_text, stripWhitespace)
+  corpus_text <- tm_map(corpus_text, lemmatize_words)
+  
+  dtm_text <- DocumentTermMatrix(corpus_text)
+  
+  # Process review_title
+  corpus_title <- Corpus(VectorSource(movie_df$title_column))
+  corpus_title <- tm_map(corpus_title, content_transformer(tolower))
+  corpus_title <- tm_map(corpus_title, removePunctuation)
+  corpus_title <- tm_map(corpus_title, removeNumbers)
+  corpus_title <- tm_map(corpus_title, removeWords, stopwords("english"))
+  corpus_title <- tm_map(corpus_title, stripWhitespace)
+  corpus_title <- tm_map(corpus_title, lemmatize_words)
+  
+  dtm_title <- DocumentTermMatrix(corpus_title)
+  
+  dtm_combined <- cbind(dtm_text, dtm_title)
+  
+  processed_df <- as.data.frame(as.matrix(dtm_combined))
+  processed_df$rating <- movie_df$rating
+  
+  return(processed_df)
+}
 
-#preparing words for analysis
-Infinity_WarCorpus <- VCorpus(DataframeSource(Infinity_WarCorpus))
-#transform words to all lowercase
-Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, content_transformer(tolower))
-#removing english stopwords-> stopwords("english")
-Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, removeWords, stopwords("english"))
-#removing any numbers
-Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, removeNumbers)
-#removing punctuations
-Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, removePunctuation)
-#removing whitespace 
-Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, stripWhitespace)
-#lemmatizing words
-Infinity_WarCorpus <- tm_map(Infinity_WarCorpus, lemmatize_words)
+regressionfunction <- function(processed_dataframe){
+  
+  set.seed(123)
+  train_indices <- sample(1:nrow(processed_dataframe), nrow(processed_dataframe)*0.7)
+  train_data <- processed_dataframe[train_indices, ]
+  test_data <- processed_dataframe[-train_indices, ]
+  
+  x_train <- as.matrix(train_data[, -ncol(train_data)])  # predictor variables
+  y_train <- train_data$rating# response variable
+  
+  fit <- glmnet(x_train, y_train, alpha=1)
+  
+  x_test <- as.matrix(test_data[, -ncol(test_data)])
+  predicted_ratings <- predict(fit, s=0.01, newx=x_test)
+  
+  actual_ratings <- test_data$rating
+  mae <- mean(abs(predicted_ratings - actual_ratings))
+  rmse <- sqrt(mean((predicted_ratings - actual_ratings)^2))
+  
+  residuals <- predicted_ratings - actual_ratings 
+  
+  df_plot <- data.frame(
+    actual_ratings,
+    predicted_ratings,
+    residuals
+  )
+  
+  colnames(df_plot) <- c("Actual", "Predicted", "Residuals")
+  
+  return(df_plot)
+}
 
-#document-term matrix
-Infinity_dtm <- DocumentTermMatrix(Infinity_WarCorpus)
-#term-document matrix
-Infinity_tdm <- TermDocumentMatrix(Infinity_WarCorpus)
+RegressionPlot <- function(Regressiondf){
+  
+  ggplot(Regressiondf, aes(x = Actual, y = Predicted)) +
+    geom_jitter(alpha = 0.5) +
+    geom_smooth(method = lm, se = FALSE, color = "red") +
+    labs(x = "Actual Ratings", y = "Predicted Ratings", 
+         title = "Actual vs Predicted Ratings") +
+    theme_minimal()
+}
 
-#wordcloud test
-m = as.matrix(Infinity_tdm)
-wordFreq = sort(rowSums(m), decreasing = TRUE)
-set.seed(2)
-wordcloud(words = names(wordFreq), freq = wordFreq, min.freq = 40, random.order = F)
+x <- wordprocessing(Twilight, 'review_text', 'review_title')
 
-#review length correlation tests
+x1 <- regressionfunction(x)
 
-Whiplash$dates1 <- as.Date(Whiplash$dates1)
+RegressionPlot(x1)
 
-Whiplash <- Whiplash[order(Whiplash$dates1), ]
-View(Whiplash)
-Whiplash_avgratings <- Whiplash %>%
-  group_by(dates1) %>%
-  summarise(avg_rating = mean(ratings1, na.rm = TRUE))
+par(mfrow = c(1, 2))
+ggplot(x1, aes(x = Residuals)) +
+  geom_histogram(binwidth = 0.05, fill = "skyblue", color = "black") +
+  labs(x = "Residuals", y = "Frequency", 
+       title = "Histogram of Residuals") +
+  theme_minimal()
 
-ggplot(Whiplash_avgratings, aes(x = dates1, y = avg_rating)) +
-  geom_line() +
-  labs(x = "Date", y = "Average Rating", title = "Trend of Movie Ratings Over Time")
+ggplot(df_residuals, aes(x = s1.1)) +
+  geom_histogram(binwidth = 0.05, fill = "skyblue", color = "black") +
+  labs(x = "Residuals", y = "Frequency", 
+       title = "Histogram of Residuals") +
+  theme_minimal()
 
-## Does movie genre determine what sort of reviews people make?
-## Comparing review word frequency between good and bad reviews
-## Using regression analysis to predict review rating
-
+qqnorm(x1$Residuals)
+qqline(residuals)
