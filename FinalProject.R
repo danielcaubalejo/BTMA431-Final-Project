@@ -1,25 +1,26 @@
 # Installing and loading packages
-install.packages("rvest")
+#install.packages("rvest")
 library(rvest)
-install.packages("dplyr")
+#install.packages("dplyr")
 library(dplyr)
-install.packages("tidyr")
+#install.packages("tidyr")
 library(tidyr)
-install.packages("data.table")
+#install.packages("data.table")
 library(data.table)
-install.packages("tm")
+#install.packages("tm")
 library(tm)
-install.packages("NLP")
+#install.packages("NLP")
 library(NLP)
-install.packages("syuzhet")
+#install.packages("syuzhet")
 library(syuzhet)
-install.packages("wordcloud")
+#install.packages("wordcloud")
 library(wordcloud)
-install.packages("textstem")
+#install.packages("textstem")
 library(textstem)
-install.packages("ggplot2")
+#install.packages("ggplot2")
 library(ggplot2)
-
+#install.packages("glmnet)
+library(glmnet)
 ####################################################################################################################
 
 #### Main Question 1: How are cinemas being affected by streaming services? ####
@@ -296,22 +297,19 @@ anova(movie_budget, model_genre)
 
 #csv files scraped from imdb -> movie_sentiment.R
 Blair_Witch <- read.csv("Blair_WitchReviews.csv")
-Choco_Factory <- read.csv("Chocolate_FactoryReviews.csv")
 Morbius <- read.csv("MorbiusReviews.csv")
 Prometheus <- read.csv("PrometheusReviews.csv")
 Twilight <- read.csv("TwilightReviews.csv")
 
 #removing NA rows
 Blair_Witch <- na.omit(Blair_Witch)
-Choco_Factory <- na.omit(Choco_Factory)
 Morbius <- na.omit(Morbius)
 Prometheus <- na.omit(Prometheus)
 Twilight <- na.omit(Twilight)
 
-wordprocessing <- function(movie_df, text_column, title_column){
+word_processing <- function(movie_df, review_text, review_title){
   
-  # Process review_text
-  corpus_text <- Corpus(VectorSource(movie_df$text_column))
+  corpus_text <- Corpus(VectorSource(movie_df$review_text))
   corpus_text <- tm_map(corpus_text, content_transformer(tolower))
   corpus_text <- tm_map(corpus_text, removePunctuation)
   corpus_text <- tm_map(corpus_text, removeNumbers)
@@ -320,9 +318,10 @@ wordprocessing <- function(movie_df, text_column, title_column){
   corpus_text <- tm_map(corpus_text, lemmatize_words)
   
   dtm_text <- DocumentTermMatrix(corpus_text)
+  dtm_text <- removeSparseTerms(dtm_text, sparse = 0.98)
   
   # Process review_title
-  corpus_title <- Corpus(VectorSource(movie_df$title_column))
+  corpus_title <- Corpus(VectorSource(movie_df$review_title))
   corpus_title <- tm_map(corpus_title, content_transformer(tolower))
   corpus_title <- tm_map(corpus_title, removePunctuation)
   corpus_title <- tm_map(corpus_title, removeNumbers)
@@ -331,15 +330,16 @@ wordprocessing <- function(movie_df, text_column, title_column){
   corpus_title <- tm_map(corpus_title, lemmatize_words)
   
   dtm_title <- DocumentTermMatrix(corpus_title)
+  dtm_title <- removeSparseTerms(dtm_title, sparse = 0.98)
   
   dtm_combined <- cbind(dtm_text, dtm_title)
   
-  processed_df <- as.data.frame(as.matrix(dtm_combined))
-  processed_df$rating <- movie_df$rating
+  processed_df <- data.frame(as.matrix(dtm_combined), y = movie_df$rating)
   
   return(processed_df)
 }
 
+#### Is there a significant relationship between movie reviews and rating?
 regressionfunction <- function(processed_dataframe){
   
   set.seed(123)
@@ -348,14 +348,14 @@ regressionfunction <- function(processed_dataframe){
   test_data <- processed_dataframe[-train_indices, ]
   
   x_train <- as.matrix(train_data[, -ncol(train_data)])  # predictor variables
-  y_train <- train_data$rating# response variable
+  y_train <- train_data$y # response variable
   
   fit <- glmnet(x_train, y_train, alpha=1)
   
   x_test <- as.matrix(test_data[, -ncol(test_data)])
   predicted_ratings <- predict(fit, s=0.01, newx=x_test)
   
-  actual_ratings <- test_data$rating
+  actual_ratings <- test_data$y
   mae <- mean(abs(predicted_ratings - actual_ratings))
   rmse <- sqrt(mean((predicted_ratings - actual_ratings)^2))
   
@@ -372,34 +372,76 @@ regressionfunction <- function(processed_dataframe){
   return(df_plot)
 }
 
-RegressionPlot <- function(Regressiondf){
+RegressionPlot <- function(Regressiondf, movie_title){
   
   ggplot(Regressiondf, aes(x = Actual, y = Predicted)) +
     geom_jitter(alpha = 0.5) +
     geom_smooth(method = lm, se = FALSE, color = "red") +
     labs(x = "Actual Ratings", y = "Predicted Ratings", 
-         title = "Actual vs Predicted Ratings") +
+         title = paste0(movie_title, ":Actual vs Predicted Ratings")) +
     theme_minimal()
 }
 
-x <- wordprocessing(Twilight, 'review_text', 'review_title')
+Prometheus_processed <- word_processing(Prometheus, 'review_text','review_title')
+Twilight_processed <- word_processing(Twilight, 'review_text','review_title')
+Blair_processed <- word_processing(Blair_Witch, 'review_text','review_title')
+Morbius_processed <- word_processing(Morbius, 'review_text', 'review_title')
 
-x1 <- regressionfunction(x)
+Pro_regression <- regressionfunction(Prometheus_processed)
+Twi_regression <- regressionfunction(Twilight_processed)
+Bla_regression <- regressionfunction(Blair_processed)
+Mor_regression <- regressionfunction(Morbius_processed)
 
-RegressionPlot(x1)
+RegressionPlot(Pro_regression, 'Prometheus')
+RegressionPlot(Twi_regression, 'Twilight')
+RegressionPlot(Bla_regression, 'Blair Witch')
+RegressionPlot(Mor_regression, 'Morbius')
 
-par(mfrow = c(1, 2))
-ggplot(x1, aes(x = Residuals)) +
-  geom_histogram(binwidth = 0.05, fill = "skyblue", color = "black") +
-  labs(x = "Residuals", y = "Frequency", 
-       title = "Histogram of Residuals") +
-  theme_minimal()
+#accuracy testing - mae
+pro_mae <- mean(abs(Pro_regression$Residuals))
+twi_mae <- mean(abs(Twi_regression$Residuals))
+bla_mae <- mean(abs(Bla_regression$Residuals))
+Mor_mae <- mean(abs(Mor_regression$Residuals))
 
-ggplot(df_residuals, aes(x = s1.1)) +
-  geom_histogram(binwidth = 0.05, fill = "skyblue", color = "black") +
-  labs(x = "Residuals", y = "Frequency", 
-       title = "Histogram of Residuals") +
-  theme_minimal()
+#accuracy testing - rmse
+pro_rmse <- sqrt(mean((Pro_regression$Residuals)^2))
+twi_rmse <- sqrt(mean((Twi_regression$Residuals)^2))
+bla_rmse <- sqrt(mean((Bla_regression$Residuals)^2))
+Mor_rmse <- sqrt(mean((Mor_regression$Residuals)^2))
 
-qqnorm(x1$Residuals)
-qqline(residuals)
+movie_names <- c("Prometheus", "Twilight", "Blair_Witch", "Morbius")
+
+mae_values <- c(pro_mae, twi_mae, bla_mae, Mor_mae)
+
+rmse_values <- c(pro_rmse, twi_rmse, bla_rmse, Mor_rmse)
+
+accuracy_df <- data.frame(Movie = movie_names, MAE = mae_values, RMSE = rmse_values)
+
+par(mfrow = c(1, 1))
+
+#diagnostics
+
+qqnorm(Pro_regression$Residuals, main = "Prometheus QQ")
+qqline(Pro_regression$Residuals)
+
+qqnorm(Twi_regression$Residuals, main = "Twilight QQ")
+qqline(Twi_regression$Residuals)
+
+qqnorm(Bla_regression$Residuals, main = "Blair Witch QQ")
+qqline(Bla_regression$Residuals)
+
+qqnorm(Mor_regression$Residuals, main = "Morbius QQ")
+qqline(Mor_regression$Residuals)
+
+hist(Pro_regression$Residuals, main = "Prometheus Residuals Histogram")
+hist(Twi_regression$Residuals, main = "Twilight Residuals Histogram")
+hist(Bla_regression$Residuals, main = "Blair Witch Residuals Histogram")
+hist(Mor_regression$Residuals, main = "Morbius Residuals Histogram")
+
+#conclusions
+#using rmse and mae, there is a significant relationship between 
+#movie ratings and reviews - actual reviews and review titles
+#however, reviewers tend to rate in extremes: 
+#if they don't like or like a movie they will rate it a 1 or 10,
+#making skewed results on the extreme ends
+#may need to try non-linear regression methods
