@@ -265,8 +265,30 @@ lines(annual.ticket.sales.df.relevant$year, predict(model.box.office), col = "re
 
 # In both graphs we see a significant drop in tickets sold and revenue in 2019, most likely due to the COVID 19 pandemic
 
+######################################################################################################################################
 
+##Is there a significant relationship between a movie's budget and its box office revenue?
+movies_data = read.csv("https://raw.githubusercontent.com/danielgrijalva/movie-stats/master/movies.csv")
+movies_data_cleaned = na.omit(movies_data)
+movie_budget = lm(gross ~ budget, data = movies_data_cleaned)
+summary(movie_budget)
+#at a chosen significance level of 0.01 we can reject the null hypothesis that there isnt a significant relationship 
+# between revenue and movie budget.
 
+# Scatter plot
+ggplot(movies_data, aes(x = budget, y = gross)) +
+  geom_point(color = "blue", size = 3) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Gross Revenue vs. Budget",
+       x = "Budget",
+       y = "Gross Revenue") +
+  theme_minimal()
+##Does the genre of a movie impact the relationship between its budget and box office revenue?
+model_genre = lm(gross ~ budget + genre, data = movies_data_cleaned)
+summary(model_genre)
+## looking at the summary, some of the genre have significant p values.
+anova(movie_budget, model_genre)
+##The anova test shows that including genre in the model significantly improves the performance of the model
 ####################################################################################################################
 
 #### Main Question 3: How has sentiment, in terms of movie reviews changed over time? ####
