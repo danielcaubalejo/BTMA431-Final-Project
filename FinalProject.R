@@ -26,6 +26,8 @@ library(glmnet)
 #### Main Question 1: How are cinemas being affected by streaming services? ####
 
 ## How are theaters performing since the rise of streaming services? ##
+
+##### Scraping #####
 link.movies.releases = "https://www.boxofficemojo.com/year/?grossesOption=calendarGrosses"
 page.movies.releases = read_html(link.movies.releases)
 
@@ -40,9 +42,15 @@ cinema.box.office = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nt
 box.office.performance.overtime <- data.frame(year.movie.releases, tickets.sold, cinema.box.office)
 
 
+
+
+
+
+
+
 ## How long after a movie release does it take for it to air on streaming platforms?
 
-# Specify the URL
+##### Scraping #####
 statista_url <- "https://www.statista.com/statistics/947757/theaters-streaming-watching-movies/"
 
 # Read HTML page
@@ -72,6 +80,9 @@ theaters_data$Number_of_Theaters_Watching_Movies <- as.numeric(theaters_data$Num
 print(theaters_data)
 
 
+
+
+
 # Needs a model
 
 
@@ -83,6 +94,8 @@ print(theaters_data)
 
 ## How do streaming services change TV industries?
 ## (What is the impact on Cable TV, news, Daily Shows, etc.)
+
+##### Scraping #####
 
 # Netflix and Amazon users and change
 # Sources: https://explodingtopics.com/blog/video-streaming-stats
@@ -108,6 +121,13 @@ netflix.users.df$netflix.change.over.previous.year <- as.numeric(netflix.users.d
 netflix.users.df$netflix.change.over.previous.year <- netflix.users.df$netflix.change.over.previous.year * 1e6
 
 netflix.users.df$year.netflix <- as.numeric(netflix.users.df$year.netflix)
+
+
+
+
+
+
+##### Scraping #####
 
 # Scraping for Amazon users and change over time
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
@@ -147,7 +167,9 @@ amazon.users.df <- amazon.users.df[amazon.users.df$year.amazon >= 2013 & amazon.
 
 
 
+
 # Cable TV users in the US
+##### Scraping #####
 
 # Source: https://en.wikipedia.org/wiki/Cable_television_in_the_United_States
 
@@ -177,6 +199,9 @@ cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV 
 
 
 
+
+##### Models ######
+
 # Cable TV users predictions for next 5 years
 
 # Making regression model to predict how many cable users in the next 5 years
@@ -196,8 +221,6 @@ predictions <- predict(cable.model, newdata = next.5.years)
 cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users = predictions)
 
 print(cable.users.predictions)
-
-
 
 
 # Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
@@ -229,6 +252,7 @@ print(correlation.matrix)
 link.thenumbers = "https://www.the-numbers.com/market/"
 page.thenumbers = read_html(link.thenumbers)
 
+##### Scraping ######
 
 # Scraping Annual Ticket sales table
 year = page.thenumbers %>% html_nodes("center:nth-child(9) a") %>% html_text()
@@ -253,6 +277,10 @@ annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
 
 
 
+
+
+##### Model ######
+
 # Making regression model to analyze the trends in annual ticket sales
 model.tickets.sold <- lm(annual.ticket.sales.df.relevant$tickets.sold ~ annual.ticket.sales.df.relevant$year, data = annual.ticket.sales.df.relevant)
 
@@ -269,8 +297,11 @@ model.box.office <- lm(annual.ticket.sales.df.relevant$total.box.office ~ annual
 plot(annual.ticket.sales.df.relevant$year, annual.ticket.sales.df.relevant$total.box.office, col = "red", xlab = "Year", ylab = "Total Box Office Revenue", main = "Box Office Revenue Trend Analysis")
 lines(annual.ticket.sales.df.relevant$year, predict(model.box.office), col = "red", lty = 2)
 
-
 # In both graphs we see a significant drop in tickets sold and revenue in 2019, most likely due to the COVID 19 pandemic
+
+
+
+
 
 ######################################################################################################################################
 
