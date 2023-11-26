@@ -72,6 +72,8 @@ theaters_data$Number_of_Theaters_Watching_Movies <- as.numeric(theaters_data$Num
 print(theaters_data)
 
 
+# Needs a model
+
 
 ####################################################################################################################
 
@@ -254,6 +256,8 @@ annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
 # Making regression model to analyze the trends in annual ticket sales
 model.tickets.sold <- lm(annual.ticket.sales.df.relevant$tickets.sold ~ annual.ticket.sales.df.relevant$year, data = annual.ticket.sales.df.relevant)
 
+par(mfrow = (c(1,2)))
+
 # Plot the regression lines
 plot(annual.ticket.sales.df.relevant$year, annual.ticket.sales.df.relevant$tickets.sold, col = "blue", xlab = "Year", ylab = "Ticket Sales", main = "Ticket Sale Trend Analysis")
 lines(annual.ticket.sales.df.relevant$year, predict(model.tickets.sold), col = "blue", lty = 2)
@@ -264,6 +268,7 @@ model.box.office <- lm(annual.ticket.sales.df.relevant$total.box.office ~ annual
 # Plot the regression lines
 plot(annual.ticket.sales.df.relevant$year, annual.ticket.sales.df.relevant$total.box.office, col = "red", xlab = "Year", ylab = "Total Box Office Revenue", main = "Box Office Revenue Trend Analysis")
 lines(annual.ticket.sales.df.relevant$year, predict(model.box.office), col = "red", lty = 2)
+
 
 # In both graphs we see a significant drop in tickets sold and revenue in 2019, most likely due to the COVID 19 pandemic
 
