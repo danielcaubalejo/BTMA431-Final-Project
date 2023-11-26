@@ -29,10 +29,10 @@ library(gbm)
 #### Main Question 1: How is traditional media being affected by streaming services? ####
 
 ## How is cable TV performing since the rise of streaming services? ##
- 
+
 ##### Scraping #####
 
-# Netflix and Amazon users and change
+# Netflix users and change over time
 # Sources: https://explodingtopics.com/blog/video-streaming-stats
 
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
@@ -46,7 +46,7 @@ netflix.change.over.previous.year <- page.explodingtopcs %>% html_nodes("table:n
 # Creating data frame for Netflix users and change
 netflix.users.df <- data.frame(year.netflix, netflix.users, netflix.change.over.previous.year)
 
-# Change data type for Netflix to be numeric & converting into millions
+# Change data type for Netflix's columns to be numeric & converting into millions
 netflix.users.df$netflix.users <- gsub(" million", "", netflix.users.df$netflix.users)
 netflix.users.df$netflix.users <- as.numeric(netflix.users.df$netflix.users)
 netflix.users.df$netflix.users <- netflix.users.df$netflix.users * 1e6
@@ -62,7 +62,6 @@ netflix.users.df$year.netflix <- as.numeric(netflix.users.df$year.netflix)
 # Scraping for Amazon users and change over time
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
 page.explodingtopcs = read_html(link.explodingtopics)
-
 
 amazon.table = page.explodingtopcs %>% html_nodes("table:nth-child(72) td") %>% html_text()
 
@@ -239,7 +238,6 @@ print(theaters_data)
 link.thenumbers = "https://www.the-numbers.com/market/"
 page.thenumbers = read_html(link.thenumbers)
 
-
 # Scraping Annual Ticket sales table
 year = page.thenumbers %>% html_nodes("center:nth-child(9) a") %>% html_text()
 tickets.sold = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(2)") %>% html_text()
@@ -249,11 +247,14 @@ avg.ticket.price = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth
 
 # Creating the scraped data into a data frame
 annual.ticket.sales.df <- data.frame(year, tickets.sold, total.box.office, total.inflation.adj.box.office, avg.ticket.price)
-#since the data for Netflix and amazon is from 2013 onwards, I'm filtering the data for tickets to be the same
+
+# Since the data for Netflix and amazon is from 2013 onwards, I'm filtering the data for tickets to be the same
 annual.ticket.sales.df.relevant = annual.ticket.sales.df[annual.ticket.sales.df$year>= 2013, ]
-#arrange them in accending order of year
+
+# Arrange them in ascending order of year
 annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant[order(annual.ticket.sales.df.relevant$year), ]
-#add columns for delta of tickets sold and total revenue
+
+# Add columns for delta of tickets sold and total revenue
 annual.ticket.sales.df.relevant$tickets.sold = as.numeric(gsub(",", "", annual.ticket.sales.df.relevant$tickets.sold))
 annual.ticket.sales.df.relevant$total.box.office <- as.numeric(gsub("[^0-9.]", "", gsub(",", "", annual.ticket.sales.df.relevant$total.box.office)))
 annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
