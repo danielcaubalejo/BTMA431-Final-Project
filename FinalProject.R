@@ -11,19 +11,19 @@ library(data.table)
 library(tm)
 #install.packages("NLP")
 library(NLP)
-#install.packages("syuzhet")
-library(syuzhet)
+#install.packages("SnowballC")
+library(SnowballC)
 #install.packages("wordcloud")
 library(wordcloud)
 #install.packages("textstem")
 library(textstem)
 #install.packages("ggplot2")
 library(ggplot2)
-#install.packages("glmnet")
-library(glmnet)
+#install.packages("gbm")
+library(gbm)
 ####################################################################################################################
 
-#### Main Question 1: How are cinemas being affected by streaming services? ####
+#### Main Question 1: How is traditional media being affected by streaming services? ####
 
 ## How is cable TV performing since the rise of streaming services? ##
  
@@ -205,8 +205,6 @@ print(theaters_data)
 
 
 
-
-
 # Needs a model
 
 
@@ -308,10 +306,10 @@ anova(movie_budget, model_genre)
 ##The anova test shows that including genre in the model significantly improves the performance of the model
 ####################################################################################################################
 
-#### Main Question 3: How has sentiment, in terms of movie reviews changed over time? ####
+#### Main Question 3: How does sentiment, in terms of movie reviews affect movie ratings? ####
 
 
-#csv files scraped from imdb -> movie_sentiment.R
+#data scraped from imdb and csv converted from movie_sentiment.R
 Blair_Witch <- read.csv("Blair_WitchReviews.csv")
 Morbius <- read.csv("MorbiusReviews.csv")
 Prometheus <- read.csv("PrometheusReviews.csv")
@@ -323,31 +321,62 @@ Morbius <- na.omit(Morbius)
 Prometheus <- na.omit(Prometheus)
 Twilight <- na.omit(Twilight)
 
+#word cleaning function
 word_processing <- function(movie_df, review_text, review_title){
   
-  corpus_text <- Corpus(VectorSource(movie_df$review_text))
-  corpus_text <- tm_map(corpus_text, content_transformer(tolower))
-  corpus_text <- tm_map(corpus_text, removePunctuation)
-  corpus_text <- tm_map(corpus_text, removeNumbers)
-  corpus_text <- tm_map(corpus_text, removeWords, stopwords("english"))
-  corpus_text <- tm_map(corpus_text, stripWhitespace)
-  corpus_text <- tm_map(corpus_text, lemmatize_words)
+  # Filter out reviews with rating greater than  5 "good reviews"
+  #movie_df <- dplyr::filter(movie_df, rating > 5)
+
+  # Filter out reviews with rating less than or equal to 5 "bad"
+  movie_df <- dplyr::filter(movie_df, rating <= 5)
   
+  #preparing review_text to be used in corpus
+  corpus_text <- Corpus(VectorSource(movie_df$review_text))
+  #transform text into lowercase
+  corpus_text <- tm_map(corpus_text, content_transformer(tolower))
+  #remove any punctuations
+  corpus_text <- tm_map(corpus_text, removePunctuation)
+  #remove numbers
+  corpus_text <- tm_map(corpus_text, removeNumbers)
+  #remove english stopwords examples - stopwords("en")
+  corpus_text <- tm_map(corpus_text, removeWords, stopwords("english"))
+  #strip whitespaces from deleted characters
+  corpus_text <- tm_map(corpus_text, stripWhitespace)
+  #lemmatize words - return to root form
+  corpus_text <- tm_map(corpus_text, lemmatize_words)
+  #remove additional keywords deemed not useful for the model
+  corpus_text <- tm_map(corpus_text, removeWords, c("film","movie"))
+  
+  #convert text corpus into document-term matrix
   dtm_text <- DocumentTermMatrix(corpus_text)
+  
+  #remove any terms not appearing in 98% of documents
   dtm_text <- removeSparseTerms(dtm_text, sparse = 0.98)
   
   # Process review_title
+  #preparing review_text to be used in corpus
   corpus_title <- Corpus(VectorSource(movie_df$review_title))
+  #transform text into lowercase
   corpus_title <- tm_map(corpus_title, content_transformer(tolower))
+  #remove any punctuation
   corpus_title <- tm_map(corpus_title, removePunctuation)
+  #remove numbers
   corpus_title <- tm_map(corpus_title, removeNumbers)
+  #remove english stopwords examples - stopwords("en")
   corpus_title <- tm_map(corpus_title, removeWords, stopwords("english"))
+  #strip whitespaces from deleted characters
   corpus_title <- tm_map(corpus_title, stripWhitespace)
+  #lemmatize words - return to root form
   corpus_title <- tm_map(corpus_title, lemmatize_words)
+  #remove additional keywords deemed not useful for the model
+  corpus_title <- tm_map(corpus_title, removeWords, c("movie","film"))
   
+  #convert text corpus into document-term matrix
   dtm_title <- DocumentTermMatrix(corpus_title)
+  #remove any terms not appearing in 98% of documents
   dtm_title <- removeSparseTerms(dtm_title, sparse = 0.98)
   
+  #combine 
   dtm_combined <- cbind(dtm_text, dtm_title)
   
   processed_df <- data.frame(as.matrix(dtm_combined), y = movie_df$rating)
@@ -355,28 +384,28 @@ word_processing <- function(movie_df, review_text, review_title){
   return(processed_df)
 }
 
-#### Is there a significant relationship between movie reviews and rating?
-regressionfunction <- function(processed_dataframe){
+#### Is there a significant relationship between specific words in movie reviews and rating?
+gbmfunction<- function(processed_dataframe){
   
+  #training and testing data
   set.seed(123)
-  train_indices <- sample(1:nrow(processed_dataframe), nrow(processed_dataframe)*0.7)
-  train_data <- processed_dataframe[train_indices, ]
-  test_data <- processed_dataframe[-train_indices, ]
+  train <- sample(nrow(processed_dataframe), floor(.5*nrow(processed_dataframe)),replace = FALSE)
+  train_data <- processed_dataframe[train,]
+  test_data <- processed_dataframe[-train,]
   
-  x_train <- as.matrix(train_data[, -ncol(train_data)])  # predictor variables
-  y_train <- train_data$y # response variable
+  #creating gbm model with test data
+  fit <- gbm(y ~ ., distribution = "tdist", data = train_data, n.trees = 1000, 
+             interaction.depth = 10, shrinkage = 0.01,n.cores = NULL, verbose = FALSE)
   
-  fit <- glmnet(x_train, y_train, alpha=1)
+  #predicting ratings using test data
+  predicted_ratings <- predict(fit, test_data)
   
-  x_test <- as.matrix(test_data[, -ncol(test_data)])
-  predicted_ratings <- predict(fit, s=0.01, newx=x_test)
-  
+  #actual ratings from test data
   actual_ratings <- test_data$y
-  mae <- mean(abs(predicted_ratings - actual_ratings))
-  rmse <- sqrt(mean((predicted_ratings - actual_ratings)^2))
-  
+  #calculating residuals
   residuals <- predicted_ratings - actual_ratings 
   
+  #data frame to compare actual vs predicted and residuals
   df_plot <- data.frame(
     actual_ratings,
     predicted_ratings,
@@ -384,47 +413,59 @@ regressionfunction <- function(processed_dataframe){
   )
   
   colnames(df_plot) <- c("Actual", "Predicted", "Residuals")
-  
-  return(df_plot)
+  #return both actual vs predicted dataframe and gbm model for future
+  return(list("plot" = df_plot, "fit" = fit))
 }
 
-RegressionPlot <- function(Regressiondf, movie_title){
+
+
+GBMsummaryplot <- function(Regressionfit, movie_title){
   
-  ggplot(Regressiondf, aes(x = Actual, y = Predicted)) +
-    geom_jitter(alpha = 0.5) +
-    geom_smooth(method = lm, se = FALSE, color = "red") +
-    labs(x = "Actual Ratings", y = "Predicted Ratings", 
-         title = paste0(movie_title, ":Actual vs Predicted Ratings")) +
-    theme_minimal()
+  summary.gbm(Regressionfit, cBars = 10)
+  title(main = paste0(movie_title, "GBM Summary"))
+ 
 }
 
+#processing text data 
 Prometheus_processed <- word_processing(Prometheus, 'review_text','review_title')
 Twilight_processed <- word_processing(Twilight, 'review_text','review_title')
 Blair_processed <- word_processing(Blair_Witch, 'review_text','review_title')
 Morbius_processed <- word_processing(Morbius, 'review_text', 'review_title')
 
-Pro_regression <- regressionfunction(Prometheus_processed)
-Twi_regression <- regressionfunction(Twilight_processed)
-Bla_regression <- regressionfunction(Blair_processed)
-Mor_regression <- regressionfunction(Morbius_processed)
+#####analysis#####
+#applying gbm function to processed datasets
+Prometheusgbm <- gbmfunction(Prometheus_processed)
+Twilightgbm <- gbmfunction(Twilight_processed)
+Blairgbm <- gbmfunction(Blair_processed)
+Morbiusgbm <- gbmfunction(Morbius_processed)
 
-RegressionPlot(Pro_regression, 'Prometheus')
-RegressionPlot(Twi_regression, 'Twilight')
-RegressionPlot(Bla_regression, 'Blair Witch')
-RegressionPlot(Mor_regression, 'Morbius')
+#top 10 relative influence words
+head(summary(Prometheusgbm$fit), 10)
+head(summary(Twilightgbm$fit), 10)
+head(summary(Blairgbm$fit), 10)
+head(summary(Morbiusgbm$fit), 10)
 
+#easier plot to see
+par(mfrow = c(1, 4))
+GBMsummaryplot(Prometheusgbm$fit, 'Prometheus')
+GBMsummaryplot(Twilightgbm$fit, 'Twilight')
+GBMsummaryplot(Blairgbm$fit, 'Blair Witch')
+GBMsummaryplot(Morbiusgbm$fit, 'Morbius')
+
+####diagnostics####
 #accuracy testing - mae
-pro_mae <- mean(abs(Pro_regression$Residuals))
-twi_mae <- mean(abs(Twi_regression$Residuals))
-bla_mae <- mean(abs(Bla_regression$Residuals))
-Mor_mae <- mean(abs(Mor_regression$Residuals))
+pro_mae <- mean(abs(Prometheusgbm$plot$Residuals))
+twi_mae <- mean(abs(Twilightgbm$plot$Residuals))
+bla_mae <- mean(abs(Blairgbm$plot$Residuals))
+Mor_mae <- mean(abs(Morbiusgbm$plot$Residuals))
 
 #accuracy testing - rmse
-pro_rmse <- sqrt(mean((Pro_regression$Residuals)^2))
-twi_rmse <- sqrt(mean((Twi_regression$Residuals)^2))
-bla_rmse <- sqrt(mean((Bla_regression$Residuals)^2))
-Mor_rmse <- sqrt(mean((Mor_regression$Residuals)^2))
+pro_rmse <- sqrt(mean((Prometheusgbm$plot$Residuals)^2))
+twi_rmse <- sqrt(mean((Twilightgbm$plot$Residuals)^2))
+bla_rmse <- sqrt(mean((Blairgbm$plot$Residuals)^2))
+Mor_rmse <- sqrt(mean((Morbiusgbm$plot$Residuals)^2))
 
+#placing all mae and rmse into one readable dataframe
 movie_names <- c("Prometheus", "Twilight", "Blair_Witch", "Morbius")
 
 mae_values <- c(pro_mae, twi_mae, bla_mae, Mor_mae)
@@ -432,27 +473,6 @@ mae_values <- c(pro_mae, twi_mae, bla_mae, Mor_mae)
 rmse_values <- c(pro_rmse, twi_rmse, bla_rmse, Mor_rmse)
 
 accuracy_df <- data.frame(Movie = movie_names, MAE = mae_values, RMSE = rmse_values)
-
-par(mfrow = c(1, 1))
-
-#diagnostics
-
-qqnorm(Pro_regression$Residuals, main = "Prometheus QQ")
-qqline(Pro_regression$Residuals)
-
-qqnorm(Twi_regression$Residuals, main = "Twilight QQ")
-qqline(Twi_regression$Residuals)
-
-qqnorm(Bla_regression$Residuals, main = "Blair Witch QQ")
-qqline(Bla_regression$Residuals)
-
-qqnorm(Mor_regression$Residuals, main = "Morbius QQ")
-qqline(Mor_regression$Residuals)
-
-hist(Pro_regression$Residuals, main = "Prometheus Residuals Histogram")
-hist(Twi_regression$Residuals, main = "Twilight Residuals Histogram")
-hist(Bla_regression$Residuals, main = "Blair Witch Residuals Histogram")
-hist(Mor_regression$Residuals, main = "Morbius Residuals Histogram")
 
 #conclusions
 #using rmse and mae, there is a significant relationship between 
