@@ -1,25 +1,26 @@
 # Installing and loading packages
-#install.packages("rvest")
+install.packages("rvest")
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("data.table")
+install.packages("tm")
+install.packages("NLP")
+install.packages("SnowballC")
+install.packages("wordcloud")
+install.packages("textstem")
+install.packages("ggplot2")
+install.packages("gbm")
+
 library(rvest)
-#install.packages("dplyr")
 library(dplyr)
-#install.packages("tidyr")
 library(tidyr)
-#install.packages("data.table")
 library(data.table)
-#install.packages("tm")
 library(tm)
-#install.packages("NLP")
 library(NLP)
-#install.packages("SnowballC")
 library(SnowballC)
-#install.packages("wordcloud")
 library(wordcloud)
-#install.packages("textstem")
 library(textstem)
-#install.packages("ggplot2")
 library(ggplot2)
-#install.packages("gbm")
 library(gbm)
 ####################################################################################################################
 
@@ -54,119 +55,119 @@ netflix.users.df$netflix.change.over.previous.year <- netflix.users.df$netflix.c
 
 netflix.users.df$year.netflix <- as.numeric(netflix.users.df$year.netflix)
 
-# ##### Scraping #####
-#
-# # Scraping for Amazon users and change over time
-# link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
-# page.explodingtopcs = read_html(link.explodingtopics)
-#
-#
-# amazon.table = page.explodingtopcs %>% html_nodes("table:nth-child(72) td") %>% html_text()
-#
-# # We have 3 headers, data divide by 3
-# amazon.table.n <- length(amazon.table) / 3
-#
-# # Creating a tibble
-# amazon.tibble <- tibble(
-#   key = rep(seq_len(amazon.table.n), each = 3),
-#   variable = rep(c("year.amazon", "amazon.users", "amazon.change.over.previous.year"), times = amazon.table.n),
-#   value = amazon.table
-#   )
-#
-# # Using Pivot_wider
-# amazon.tibble.wide <- amazon.tibble %>%
-#   pivot_wider(names_from = variable, values_from = value)
-#
-# # Removing the first row and column of our table
-# amazon.users.df <- amazon.tibble.wide[-1, -1]
-#
-# # Change data type for Amazon to be numeric & converting into millions
-# amazon.users.df$amazon.users <- gsub(" million", "", amazon.users.df$amazon.users)
-# amazon.users.df$amazon.users <- as.numeric(amazon.users.df$amazon.users)
-# amazon.users.df$amazon.users <- amazon.users.df$amazon.users * 1e6
-#
-# amazon.users.df$amazon.change.over.previous.year <- gsub("↑| million", "", amazon.users.df$amazon.change.over.previous.year)
-# amazon.users.df$amazon.change.over.previous.year <- as.numeric(amazon.users.df$amazon.change.over.previous.year)
-# amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.change.over.previous.year * 1e6
-#
-# amazon.users.df$year.amazon <- as.numeric(amazon.users.df$year.amazon)
-# amazon.users.df <- amazon.users.df[amazon.users.df$year.amazon >= 2013 & amazon.users.df$year.amazon <= 2023, ]
-#
-#
-#
-#
-# # Cable TV users in the US
-# ##### Scraping #####
-#
-# # Source: https://en.wikipedia.org/wiki/Cable_television_in_the_United_States
-#
-# link.wikipedia = "https://en.wikipedia.org/wiki/Cable_television_in_the_United_States"
-# page.wikipedia = read_html(link.wikipedia)
-#
-# cable.users.df <- page.wikipedia %>% html_nodes("table.wikitable") %>% html_table() %>% .[[1]]
-#
-# # Removing [#] from the ends of the numbers
-# cable.users.df$`Cable TV subscribers` <- sub("\\[\\d+\\]", "", cable.users.df$`Cable TV subscribers`)
-# cable.users.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", cable.users.df$`Telephone company TV subscribers`)
-#
-# # Removing month from years
-# cable.users.df$Year <- as.numeric(sub("\\w+\\.\\s", "", cable.users.df$Year))
-#
-# # Turn Cable TV into numeric
-# cable.users.df$`Cable TV subscribers` <- as.numeric(gsub(",", "",cable.users.df$`Cable TV subscribers`))
-#
-# # Removing unused Telephone Company TV subscribers column
-# cable.users.df$`Telephone company TV subscribers` <- NULL
-#
-# # Sub-setting data to be from 2013 to 2023
-# cable.users.df <- cable.users.df[cable.users.df$Year >= 2013 & cable.users.df$Year <= 2023, ]
-#
-# # Adding change over time column
-# cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV subscribers`))
-#
-#
-#
-#
-# ##### Models ######
-#
-# # Cable TV users predictions for next 5 years
-#
-# # Making regression model to predict how many cable users in the next 5 years
-# cable.model <- lm(`Cable TV subscribers` ~ Year + change.over.previous.year, data = cable.users.df)
-#
-# # Creating a sequence for the next 5 years
-# next.5.years <- data.frame(Year = seq(from = 2023, to = 2028, by = 1))
-#
-# # Calculate change for the next.5.years based on the last available change
-# last.observation <- tail(cable.users.df$`Cable TV subscribers`, 1)
-# next.5.years$change.over.previous.year <- last.observation - cable.users.df$`Cable TV subscribers`[nrow(cable.users.df)]
-#
-# # Predict for the next 5 years
-# predictions <- predict(cable.model, newdata = next.5.years)
-#
-# # Add predictions into a data frame
-# cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users = predictions)
-#
-# print(cable.users.predictions)
-#
-#
-# # Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
-#
-# # Merge data frames based on year column
-# subscribers.merged.df <- merge(merge(amazon.users.df, netflix.users.df, by.x = "year.amazon", by.y = "year.netflix"), cable.users.df, by.x = "year.amazon", by.y = "Year")
-#
-# # Getting rid of rows with NA
-# subscribers.merged.df <- subscribers.merged.df[-1 , ]
-#
-# # Calculate the correlation matrix based on change over previous year
-# correlation.matrix <- cor(subscribers.merged.df[, c("amazon.change.over.previous.year", "netflix.change.over.previous.year", "change.over.previous.year")])
-#
-# # Display the correlation matrix
-# print(correlation.matrix)
-#
-# # Amazon v. Netflix has a correlation of 0.27, slightly positively correlated, increase as each other increase
-# # Amazon v Cable TV has a negative correlation of -0.15, as amazon increases, Cable TV subscribers decrease
-# # Netflix v Cable TV has a negative correlation of -0.22, as Netflix increases, Cable TV subscribers decrease
+##### Scraping #####
+
+# Scraping for Amazon users and change over time
+link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
+page.explodingtopcs = read_html(link.explodingtopics)
+
+
+amazon.table = page.explodingtopcs %>% html_nodes("table:nth-child(72) td") %>% html_text()
+
+# We have 3 headers, data divide by 3
+amazon.table.n <- length(amazon.table) / 3
+
+# Creating a tibble
+amazon.tibble <- tibble(
+  key = rep(seq_len(amazon.table.n), each = 3),
+  variable = rep(c("year.amazon", "amazon.users", "amazon.change.over.previous.year"), times = amazon.table.n),
+  value = amazon.table
+  )
+
+# Using Pivot_wider
+amazon.tibble.wide <- amazon.tibble %>%
+  pivot_wider(names_from = variable, values_from = value)
+
+# Removing the first row and column of our table
+amazon.users.df <- amazon.tibble.wide[-1, -1]
+
+# Change data type for Amazon to be numeric & converting into millions
+amazon.users.df$amazon.users <- gsub(" million", "", amazon.users.df$amazon.users)
+amazon.users.df$amazon.users <- as.numeric(amazon.users.df$amazon.users)
+amazon.users.df$amazon.users <- amazon.users.df$amazon.users * 1e6
+
+amazon.users.df$amazon.change.over.previous.year <- gsub("↑| million", "", amazon.users.df$amazon.change.over.previous.year)
+amazon.users.df$amazon.change.over.previous.year <- as.numeric(amazon.users.df$amazon.change.over.previous.year)
+amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.change.over.previous.year * 1e6
+
+amazon.users.df$year.amazon <- as.numeric(amazon.users.df$year.amazon)
+amazon.users.df <- amazon.users.df[amazon.users.df$year.amazon >= 2013 & amazon.users.df$year.amazon <= 2023, ]
+
+
+
+
+# Cable TV users in the US
+##### Scraping #####
+
+# Source: https://en.wikipedia.org/wiki/Cable_television_in_the_United_States
+
+link.wikipedia = "https://en.wikipedia.org/wiki/Cable_television_in_the_United_States"
+page.wikipedia = read_html(link.wikipedia)
+
+cable.users.df <- page.wikipedia %>% html_nodes("table.wikitable") %>% html_table() %>% .[[1]]
+
+# Removing [#] from the ends of the numbers
+cable.users.df$`Cable TV subscribers` <- sub("\\[\\d+\\]", "", cable.users.df$`Cable TV subscribers`)
+cable.users.df$`Telephone company TV subscribers` <- sub("\\[\\d+\\]", "", cable.users.df$`Telephone company TV subscribers`)
+
+# Removing month from years
+cable.users.df$Year <- as.numeric(sub("\\w+\\.\\s", "", cable.users.df$Year))
+
+# Turn Cable TV into numeric
+cable.users.df$`Cable TV subscribers` <- as.numeric(gsub(",", "",cable.users.df$`Cable TV subscribers`))
+
+# Removing unused Telephone Company TV subscribers column
+cable.users.df$`Telephone company TV subscribers` <- NULL
+
+# Sub-setting data to be from 2013 to 2023
+cable.users.df <- cable.users.df[cable.users.df$Year >= 2013 & cable.users.df$Year <= 2023, ]
+
+# Adding change over time column
+cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV subscribers`))
+
+
+
+
+##### Models ######
+
+# Cable TV users predictions for next 5 years
+
+# Making regression model to predict how many cable users in the next 5 years
+cable.model <- lm(`Cable TV subscribers` ~ Year + change.over.previous.year, data = cable.users.df)
+
+# Creating a sequence for the next 5 years
+next.5.years <- data.frame(Year = seq(from = 2023, to = 2028, by = 1))
+
+# Calculate change for the next.5.years based on the last available change
+last.observation <- tail(cable.users.df$`Cable TV subscribers`, 1)
+next.5.years$change.over.previous.year <- last.observation - cable.users.df$`Cable TV subscribers`[nrow(cable.users.df)]
+
+# Predict for the next 5 years
+predictions <- predict(cable.model, newdata = next.5.years)
+
+# Add predictions into a data frame
+cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users = predictions)
+
+print(cable.users.predictions)
+
+
+# Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
+
+# Merge data frames based on year column
+subscribers.merged.df <- merge(merge(amazon.users.df, netflix.users.df, by.x = "year.amazon", by.y = "year.netflix"), cable.users.df, by.x = "year.amazon", by.y = "Year")
+
+# Getting rid of rows with NA
+subscribers.merged.df <- subscribers.merged.df[-1 , ]
+
+# Calculate the correlation matrix based on change over previous year
+correlation.matrix <- cor(subscribers.merged.df[, c("amazon.change.over.previous.year", "netflix.change.over.previous.year", "change.over.previous.year")])
+
+# Display the correlation matrix
+print(correlation.matrix)
+
+# Amazon v. Netflix has a correlation of 0.27, slightly positively correlated, increase as each other increase
+# Amazon v Cable TV has a negative correlation of -0.15, as amazon increases, Cable TV subscribers decrease
+# Netflix v Cable TV has a negative correlation of -0.22, as Netflix increases, Cable TV subscribers decrease
 
 
 
