@@ -22,6 +22,8 @@ library(wordcloud)
 library(textstem)
 library(ggplot2)
 library(gbm)
+
+
 ####################################################################################################################
 
 #### Main Question 1: How is traditional media being affected by streaming services? ####
@@ -148,7 +150,13 @@ predictions <- predict(cable.model, newdata = next.5.years)
 # Add predictions into a data frame
 cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users = predictions)
 
-print(cable.users.predictions)
+# Add change over previous year
+cable.users.predictions$change.over.previous.year <- c(NA, diff(cable.users.predictions$predicted.users))
+
+
+
+
+
 
 
 # Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
@@ -277,7 +285,18 @@ lines(annual.ticket.sales.df.relevant$year, predict(model.box.office), col = "re
 
 # In both graphs we see a significant drop in tickets sold and revenue in 2019, most likely due to the COVID 19 pandemic
 
+# Getting plotted points into a data frame so we can download as csv later
+plot_data_tickets <- data.frame(
+  Year = annual.ticket.sales.df.relevant$year,
+  Observed_Tickets_Sold = annual.ticket.sales.df.relevant$tickets.sold,
+  Predicted_Tickets_Sold = predict(model.tickets.sold)
+)
 
+plot_data_box_office <- data.frame(
+  Year = annual.ticket.sales.df.relevant$year,
+  Observed_Total_Box_Office = annual.ticket.sales.df.relevant$total.box.office,
+  Predicted_Total_Box_Office = predict(model.box.office)
+)
 
 
 
