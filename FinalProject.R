@@ -19,7 +19,7 @@ library(wordcloud)
 library(textstem)
 #install.packages("ggplot2")
 library(ggplot2)
-#install.packages("glmnet)
+#install.packages("glmnet")
 library(glmnet)
 ####################################################################################################################
 
@@ -214,6 +214,7 @@ print(correlation.matrix)
 
 # Amazon v. Netflix has a correlation of 0.27, slightly positively correlated, increase as each other increase
 # Amazon v Cable TV has a negative correlation of -0.15, as amazon increases, Cable TV subscribers decrease
+# Netflix v Cable TV has a negative correlation of -0.22, as Netflix increases, Cable TV subscribers decrease
 
 
 
