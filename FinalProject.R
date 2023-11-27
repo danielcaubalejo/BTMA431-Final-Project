@@ -28,9 +28,9 @@ library(gbm)
 
 #### Main Question 1: How is traditional media being affected by streaming services? ####
 
-## How is cable TV performing since the rise of streaming services? ##
+## Sub Question 1a): How is cable TV performing since the rise of streaming services? ##
 
-##### Scraping #####
+##### 1a). Scraping #####
 
 # Netflix users and change over time
 # Sources: https://explodingtopics.com/blog/video-streaming-stats
@@ -56,8 +56,6 @@ netflix.users.df$netflix.change.over.previous.year <- as.numeric(netflix.users.d
 netflix.users.df$netflix.change.over.previous.year <- netflix.users.df$netflix.change.over.previous.year * 1e6
 
 netflix.users.df$year.netflix <- as.numeric(netflix.users.df$year.netflix)
-
-##### Scraping #####
 
 # Scraping for Amazon users and change over time
 link.explodingtopics = "https://explodingtopics.com/blog/video-streaming-stats"
@@ -94,13 +92,7 @@ amazon.users.df$amazon.change.over.previous.year <- amazon.users.df$amazon.chang
 amazon.users.df$year.amazon <- as.numeric(amazon.users.df$year.amazon)
 amazon.users.df <- amazon.users.df[amazon.users.df$year.amazon >= 2013 & amazon.users.df$year.amazon <= 2023, ]
 
-
-
-
 # Cable TV users in the US
-##### Scraping #####
-
-# Source: https://en.wikipedia.org/wiki/Cable_television_in_the_United_States
 
 link.wikipedia = "https://en.wikipedia.org/wiki/Cable_television_in_the_United_States"
 page.wikipedia = read_html(link.wikipedia)
@@ -126,10 +118,7 @@ cable.users.df <- cable.users.df[cable.users.df$Year >= 2013 & cable.users.df$Ye
 # Adding change over time column
 cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV subscribers`))
 
-
-
-
-##### Models ######
+##### 1a.) Models ######
 
 # Cable TV users predictions for next 5 years
 
@@ -151,12 +140,6 @@ cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users 
 
 # Add change over previous year
 cable.users.predictions$change.over.previous.year <- c(NA, diff(cable.users.predictions$predicted.users))
-
-
-
-
-
-
 
 # Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
 
@@ -180,8 +163,7 @@ print(correlation.matrix)
 
 
 
-## How long after a movie release does it take for it to air on streaming platforms?
-####Aneesha
+## Sub question 1b). How long after a movie release does it take for it to air on streaming platforms?
 ##### Scraping #####
 statista_url <- "https://www.statista.com/statistics/947757/theaters-streaming-watching-movies/"
 
@@ -221,7 +203,7 @@ print(theaters_data)
 
 #### Main Question 2: How does movie industry performance compare before and after the pandemic? ####
 
-## How has ticket sales and box office revenue changed over time since the pandemic?
+## Sub question 2a): How has ticket sales and box office revenue changed over time since the pandemic?
 ##### Scraping ######
 
 # Sources:
@@ -255,11 +237,7 @@ annual.ticket.sales.df.relevant = annual.ticket.sales.df.relevant %>%
   mutate(tickets_sold_delta = c(NA, diff(tickets.sold)),
          revenue_delta = c(NA, diff(total.box.office)))
 
-
-
-
-
-##### Model ######
+##### 2a): Model ######
 
 # Making regression model to analyze the trends in annual ticket sales
 model.tickets.sold <- lm(annual.ticket.sales.df.relevant$tickets.sold ~ annual.ticket.sales.df.relevant$year, data = annual.ticket.sales.df.relevant)
@@ -298,7 +276,7 @@ plot_data_box_office <- data.frame(
 
 ######################################################################################################################################
 
-##Is there a significant relationship between a movie's budget and its box office revenue?
+#### Main question 3: Is there a significant relationship between a movie's budget and its box office revenue?
 
 # Scraping
 movies_data = read.csv("https://raw.githubusercontent.com/danielgrijalva/movie-stats/master/movies.csv")
@@ -318,7 +296,7 @@ ggplot(movies_data, aes(x = budget, y = gross)) +
        y = "Gross Revenue") +
   theme_minimal()
 
-##Does the genre of a movie impact the relationship between its budget and box office revenue?
+## Sub question 3a): Does the genre of a movie impact the relationship between its budget and box office revenue?
 model_genre = lm(gross ~ budget + genre, data = movies_data_cleaned)
 summary(model_genre)
 
@@ -330,7 +308,7 @@ anova(movie_budget, model_genre)
 
 ####################################################################################################################
 
-#### Main Question 3: How does sentiment, in terms of movie reviews affect movie ratings? ####
+#### Main Question 4: How does sentiment, in terms of movie reviews affect movie ratings? ####
 
 
 #data scraped from imdb and csv converted from movie_sentiment.R
@@ -408,7 +386,7 @@ word_processing <- function(movie_df, review_text, review_title){
   return(processed_df)
 }
 
-#### Is there a significant relationship between specific words in movie reviews and rating?
+#### Sub question 4a): Is there a significant relationship between specific words in movie reviews and rating?
 gbmfunction<- function(processed_dataframe){
   
   #training and testing data
@@ -441,8 +419,7 @@ gbmfunction<- function(processed_dataframe){
   return(list("plot" = df_plot, "fit" = fit))
 }
 
-
-
+####summary plot visuals
 GBMsummaryplot <- function(Regressionfit, movie_title){
   
   summary.gbm(Regressionfit, cBars = 10)
@@ -457,6 +434,7 @@ Blair_processed <- word_processing(Blair_Witch, 'review_text','review_title')
 Morbius_processed <- word_processing(Morbius, 'review_text', 'review_title')
 
 #####analysis#####
+
 #applying gbm function to processed datasets
 Prometheusgbm <- gbmfunction(Prometheus_processed)
 Twilightgbm <- gbmfunction(Twilight_processed)
