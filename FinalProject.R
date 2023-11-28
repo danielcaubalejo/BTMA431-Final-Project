@@ -123,24 +123,31 @@ cable.users.df$change.over.previous.year <- c(NA, diff(cable.users.df$`Cable TV 
 
 # Cable TV users predictions for next 5 years
 
+# Creating subsets to match years 
+subset.amazon <- amazon.users.df[1:(nrow(amazon.users.df)-1), ]
+subset.netflix <- netflix.users.df[1:(nrow(netflix.users.df)-1), ]
+
 # Making regression model to predict how many cable users in the next 5 years
-cable.model <- lm(`Cable TV subscribers` ~ Year + change.over.previous.year, data = cable.users.df)
+cable.prediction.model <- lm(cable.users.df$`Cable TV subscribers` ~ cable.users.df$Year + 
+                               cable.users.df$change.over.previous.year +
+                               subset.amazon$year.amazon + subset.amazon$amazon.change.over.previous.year + 
+                               subset.netflix$year.netflix +
+                               subset.netflix$netflix.change.over.previous.year)
 
-# Creating a sequence for the next 5 years
-next.5.years <- data.frame(Year = seq(from = 2023, to = 2028, by = 1))
+# Creating a sequence of years to match our predictions
+next.years <- data.frame(Year = seq(from = 2023, to = 2031, by = 1))
 
-# Calculate change for the next.5.years based on the last available change
-last.observation <- tail(cable.users.df$`Cable TV subscribers`, 1)
-next.5.years$change.over.previous.year <- last.observation - cable.users.df$`Cable TV subscribers`[nrow(cable.users.df)]
+# Predicting future Cable TV Subscribers
+predictions <- predict(cable.prediction.model, newdata = next.years)
 
-# Predict for the next 5 years
-predictions <- predict(cable.model, newdata = next.5.years)
+# Removing NA from predictions
+subset.predictions <- predictions[-1]
 
-# Add predictions into a data frame
-cable.users.predictions <- data.frame(Year = next.5.years$Year, predicted.users = predictions)
+# Add predictions and years sequence to a data frame
+cable.users.predict.df <- data.frame(Year = next.years, predicted.users = subset.predictions)
 
-# Add change over previous year
-cable.users.predictions$change.over.previous.year <- c(NA, diff(cable.users.predictions$predicted.users))
+# Show only next 5 years
+predict.next.5.df <- head(cable.users.predict.df, n = 5)
 
 # Making a correlation matrix to determine how correlated the change in subscribers between Amazon, Netflix and Cable TV is
 
