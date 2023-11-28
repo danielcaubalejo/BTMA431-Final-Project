@@ -160,42 +160,50 @@ print(correlation.matrix)
 # Netflix v Cable TV has a negative correlation of -0.22, as Netflix increases, Cable TV subscribers decrease
 
 
+####### sub question 1b) Does the increase in subscribers of streaming platform affect the total box revenue?
+## Box Office Revenue Over the year
+# Sources:
+# https://www.statista.com/statistics/187073/tickets-sold-at-the-north-american-box-office-since-1980/
+# https://www.the-numbers.com/market/
 
+link.thenumbers = "https://www.the-numbers.com/market/"
+page.thenumbers = read_html(link.thenumbers)
 
+# Scraping Annual Ticket sales table
+year = page.thenumbers %>% html_nodes("center:nth-child(9) a") %>% html_text()
+tickets.sold = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(2)") %>% html_text()
+total.box.office = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(3)") %>% html_text()
+total.inflation.adj.box.office = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(4)") %>% html_text()
+avg.ticket.price = page.thenumbers %>% html_nodes("center:nth-child(9) .data:nth-child(5)") %>% html_text()
 
-## Sub question 1b). How long after a movie release does it take for it to air on streaming platforms?
-##### Scraping #####
-statista_url <- "https://www.statista.com/statistics/947757/theaters-streaming-watching-movies/"
+# Creating the scraped data into a data frame
+annual.ticket.sales.df <- data.frame(year, tickets.sold, total.box.office, total.inflation.adj.box.office, avg.ticket.price) 
+annual.ticket.sales.df_2013 <- filter(annual.ticket.sales.df, year >= 2013)
+annual.ticket.sales.df_2013$total.inflation.adj.box.office <-  as.numeric(gsub("[\\$,]", "", annual.ticket.sales.df_2013$total.inflation.adj.box.office)) 
+annual.ticket.sales.df_before<- filter(annual.ticket.sales.df, year >= 2007 & year <= 2013)
+annual.ticket.sales.df_after <- filter(annual.ticket.sales.df, year >= 2013 & year <= 2019)
+annual.ticket.sales.df_before$total.inflation.adj.box.office <- as.numeric(gsub("[\\$,]", "", annual.ticket.sales.df_before$total.inflation.adj.box.office))
+annual.ticket.sales.df_after$total.inflation.adj.box.office <- as.numeric(gsub("[\\$,]", "", annual.ticket.sales.df_after$total.inflation.adj.box.office))
 
-# Read HTML page
-page_statista <- read_html(statista_url)
+#Combine Netflix and Amazon tables together
 
-# Scraping for theaters streaming and watching movies
-theaters_data <- page_statista %>%
-  html_nodes("table:nth-child(15) tr") %>%
-  html_text() %>%
-  strsplit("\n") %>%
-  matrix(ncol = 3, byrow = TRUE) %>%
-  as.data.frame()
+Total_Subscribers_df <- data.frame(year = amazon.users.df$year.amazon, total_subs =  amazon.users.df$amazon.users + netflix.users.df$netflix.users)
 
-# Naming columns
-colnames(theaters_data) <- c("Year", "Number of Theaters Streaming", "Number of Theaters Watching Movies")
+## Model
 
-# Cleaning data
-theaters_data <- theaters_data[-1, ]  # Remove the header row
-theaters_data <- theaters_data[-nrow(theaters_data), ]  # Remove the last row (total)
+##Perform one sided t.test
+t_test_box_revenue_difference <- t.test(annual.ticket.sales.df_before$total.inflation.adj.box.office, annual.ticket.sales.df_after$total.inflation.adj.box.office, alternative = "greater")
+print(t_test_box_revenue_difference)
 
-# Convert columns to appropriate data types if needed
-theaters_data$Year <- as.numeric(theaters_data$Year)
-theaters_data$Number_of_Theaters_Streaming <- as.numeric(theaters_data$Number_of_Theaters_Streaming)
-theaters_data$Number_of_Theaters_Watching_Movies <- as.numeric(theaters_data$Number_of_Theaters_Watching_Movies)
+### The hypothesis is True. Adjusted by inflation, the total box revenue from 2013-2019 decreases.
 
-# Print the resulting data frame
-print(theaters_data)
+## What is the correlation between the number of subscribers and total box revenue
+totalsubs_totalboxoffice_merged <- merge(Total_Subscribers_df, annual.ticket.sales.df_2013, by = "year")
+regression_1 <- lm(total.inflation.adj.box.office ~ total_subs, data = totalsubs_totalboxoffice_merged)
+summary(regression_1)
 
+## It shows that the change in total box office revenue adjusted by inflation can be explained by the change in the subscribers of streaming platform 52.55% of the time
 
-
-# Needs a model
 
 
 ####################################################################################################################
