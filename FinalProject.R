@@ -1,4 +1,4 @@
-# Installing and loading packages
+# Installing packages
 install.packages("rvest")
 install.packages("dplyr")
 install.packages("tidyr")
@@ -11,6 +11,7 @@ install.packages("textstem")
 install.packages("ggplot2")
 install.packages("gbm")
 
+# Loading Packages
 library(rvest)
 library(dplyr)
 library(tidyr)
