@@ -40,8 +40,8 @@ scroll_navigation <- function() {
 #function to reveal reviews that are too long
 
 dropdown_all <- function() {
-  # Assuming remDr and button_class are already defined
-    button_class <- "expander-icon-wrapper"  # Replace with the actual class name
+
+  button_class <- "expander-icon-wrapper"  
   
   # Find all buttons with the specified class
   buttons <- remDr$findElements(using = "css selector", value = paste(".", button_class, sep = ""))
@@ -53,7 +53,7 @@ dropdown_all <- function() {
 }
 
 #function to scrape review data from imdb
-
+#link -> imdb review link, movie_title -> movie title, pcuser -> name of computer
 getreviewdata <- function(link, movie_title, pcuser){
   
   remDr$navigate(link)
