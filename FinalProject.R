@@ -324,7 +324,7 @@ anova(movie_budget, model_genre)
 
 ####################################################################################################################
 
-#### Main Question 4: How does sentiment, in terms of movie reviews affect movie ratings? ####
+#### Main Question 4: How does movie reviews affect movie ratings? ####
 
 
 #data scraped from imdb and csv converted from movie_sentiment.R
@@ -492,10 +492,4 @@ rmse_values <- c(pro_rmse, twi_rmse, bla_rmse, Mor_rmse)
 
 accuracy_df <- data.frame(Movie = movie_names, MAE = mae_values, RMSE = rmse_values)
 
-#conclusions
-#using rmse and mae, there is a significant relationship between 
-#movie ratings and reviews - actual reviews and review titles
-#however, reviewers tend to rate in extremes: 
-#if they don't like or like a movie they will rate it a 1 or 10,
-#making skewed results on the extreme ends
-#may need to try non-linear regression methods
+
